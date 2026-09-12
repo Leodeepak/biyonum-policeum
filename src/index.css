@@ -1,0 +1,378 @@
+/* Biyonum Policeum - Plain Vanilla CSS Design System */
+
+:root {
+  /* Exact Color System */
+  --brand-yellow: #FFC83D;
+  --dark-navy: #172B4D;
+  --bg-cream: #FFF9ED;
+  --bg-blue-light: #F2F7FF;
+  --bg-card: #FFFFFF;
+  --text-primary: #172B4D;
+  --text-secondary: #52627A;
+  --border-color: #E4EAF2;
+
+  --color-success: #35B779;
+  --color-warning: #FF9F43;
+  --color-error: #F05252;
+
+  /* Accents */
+  --accent-blue: #4D8DFF;
+  --accent-pink: #F15BB5;
+  --accent-purple: #8B5CF6;
+  --accent-orange: #FF8A3D;
+  --accent-green: #32C48D;
+  --accent-red: #F05252;
+
+  /* Exact Role Colors */
+  --role-king: #FFC83D;
+  --role-queen: #F15BB5;
+  --role-minister: #8B5CF6;
+  --role-soldier: #FF8A3D;
+  --role-slave: #32C48D;
+  --role-police: #4D8DFF;
+  --role-thief: #F05252;
+
+  --font-heading: 'Outfit', 'Nunito', -apple-system, sans-serif;
+  --font-body: 'Plus Jakarta Sans', 'Nunito', -apple-system, sans-serif;
+
+  --shadow-soft: 0 8px 24px -4px rgba(23, 43, 77, 0.08);
+  --shadow-card: 0 16px 32px -8px rgba(23, 43, 77, 0.1);
+  --shadow-button: 0 8px 20px -4px rgba(23, 43, 77, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-cream);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(255, 200, 61, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(77, 141, 255, 0.1) 0%, transparent 40%);
+  background-attachment: fixed;
+}
+
+/* Container */
+.app-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  color: var(--dark-navy);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.game-title {
+  font-size: 44px;
+  line-height: 1.15;
+  color: var(--dark-navy);
+  font-weight: 800;
+}
+
+@media (max-width: 640px) {
+  .game-title {
+    font-size: 32px;
+  }
+}
+
+.section-heading {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--dark-navy);
+  margin-bottom: 16px;
+}
+
+.text-muted {
+  color: var(--text-secondary);
+}
+
+/* Action Buttons (STEP 6 SPECIFICATION) */
+.btn-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 56px;
+  height: 56px;
+  padding: 0 24px;
+  border-radius: 16px;
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+  border: none;
+  box-shadow: var(--shadow-button);
+  transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+  width: 100%;
+}
+
+.btn-base:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -4px rgba(23, 43, 77, 0.2);
+}
+
+.btn-base:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px -2px rgba(23, 43, 77, 0.15);
+}
+
+.btn-base:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* CREATE GAME & CREATE ROOM */
+.btn-create {
+  background-color: var(--brand-yellow);
+  color: var(--dark-navy);
+}
+
+/* JOIN GAME & JOIN ROOM */
+.btn-join {
+  background-color: var(--accent-blue);
+  color: #FFFFFF;
+}
+
+/* HOW TO PLAY & SECONDARY */
+.btn-secondary {
+  background-color: #FFFFFF;
+  color: var(--dark-navy);
+  border: 2px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(23, 43, 77, 0.04);
+}
+
+.btn-secondary:hover {
+  border-color: var(--dark-navy);
+}
+
+/* DANGER / ACCUSE */
+.btn-danger {
+  background-color: var(--color-error);
+  color: #FFFFFF;
+}
+
+/* Input Specification */
+.game-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.game-input-label {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--dark-navy);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.game-input {
+  width: 100%;
+  height: 56px;
+  min-height: 56px;
+  background-color: #FFFFFF;
+  border: 2px solid var(--border-color);
+  border-radius: 16px;
+  padding: 0 20px;
+  color: var(--dark-navy);
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 700;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.game-input:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 4px rgba(77, 141, 255, 0.15);
+}
+
+/* Selectable Option Tile */
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.option-tile {
+  height: 56px;
+  min-height: 56px;
+  border-radius: 14px;
+  border: 2px solid var(--border-color);
+  background-color: #FFFFFF;
+  color: var(--dark-navy);
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.option-tile:hover {
+  border-color: var(--dark-navy);
+}
+
+.option-tile.selected {
+  background-color: var(--brand-yellow);
+  color: var(--dark-navy);
+  border-color: var(--dark-navy);
+  box-shadow: 0 4px 12px rgba(255, 200, 61, 0.3);
+  transform: scale(1.02);
+}
+
+/* Cards System */
+.game-card {
+  background-color: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.game-panel {
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Header */
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+/* Role Card Grid (How to Play) */
+.role-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.role-card-item {
+  background-color: #FFFFFF;
+  border-radius: 20px;
+  border: 3px solid var(--role-card-border, var(--border-color));
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  box-shadow: var(--shadow-soft);
+}
+
+.role-card-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--dark-navy);
+}
+
+.role-card-points {
+  font-size: 14px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 999px;
+  color: var(--dark-navy);
+  background-color: var(--role-card-bg, #FFF9ED);
+}
+
+/* Player List Cards */
+.player-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.player-card {
+  background-color: #FFFFFF;
+  border: 2px solid var(--border-color);
+  border-radius: 16px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-soft);
+  transition: all 150ms ease;
+}
+
+.player-card.selectable {
+  cursor: pointer;
+}
+
+.player-card.selectable:hover {
+  border-color: var(--brand-yellow);
+  transform: translateY(-2px);
+}
+
+.player-card.selected {
+  border-color: var(--brand-yellow);
+  background-color: #FFFDF0;
+  box-shadow: 0 0 0 3px var(--brand-yellow);
+}
+
+.host-badge {
+  background-color: var(--brand-yellow);
+  color: var(--dark-navy);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+/* Rules Section Container */
+.rules-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 16px;
+  background-color: var(--bg-blue-light);
+  border: 2px solid var(--border-color);
+}
+
+.rules-section-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--dark-navy);
+  text-transform: uppercase;
+}
