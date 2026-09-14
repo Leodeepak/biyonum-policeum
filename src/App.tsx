@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { GameSettings, RoomState } from './types/game';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { GameSettings, Player, RoomState } from './types/game';
 import { 
   createInitialRoom, 
   addBotPlayer, 
@@ -12,6 +12,11 @@ import {
   advanceToNextRoundOrFinal, 
   resetGameForNewMatch 
 } from './game/roomManager';
+import {
+  createFirestoreRoom,
+  joinFirestoreRoom,
+  subscribeToFirestoreRoom,
+} from './game/firestoreRooms';
 
 import { Header } from './components/Header';
 import { RulesModal } from './components/RulesModal';
@@ -32,42 +37,99 @@ export const App: React.FC = () => {
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
-  // 1. Create Room
-  const handleCreateRoom = (hostName: string, settings: GameSettings) => {
-    const newRoom = createInitialRoom(hostName, settings);
-    setRoom(newRoom);
-    setCurrentView('HOME');
-  };
+  // Async operation state for Create/Join flows
+  const [isLoading, setIsLoading] = useState(false);
+  const [firebaseError, setFirebaseError] = useState<string | null>(null);
 
-  // 2. Join Room (Local simulation / mock)
-  const handleJoinRoom = (roomCode: string, playerName: string) => {
-    // If a room exists locally, join it; otherwise create mock join room
-    let targetRoom = room;
-    if (!targetRoom || targetRoom.code !== roomCode) {
-      targetRoom = createInitialRoom('Host Raja', { playerCount: 5, targetRounds: 5 });
-      targetRoom.code = roomCode;
+  // Per-client player identity — never overwritten by Firestore snapshots
+  const clientPlayerIdRef = useRef<string | null>(null);
+
+  // Holds the active Firestore unsubscribe function
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+
+  /** Tear down the current Firestore subscription without touching Firestore data */
+  const cancelSubscription = useCallback(() => {
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+      unsubscribeRef.current = null;
     }
+  }, []);
 
-    const newPlayer = {
-      id: `player-joined-${Date.now()}`,
-      name: playerName,
-      avatar: '🕵️',
-      isHost: false,
-      isBot: false,
-      totalScore: 0
+  /**
+   * Start a live Firestore subscription for the given room code.
+   * Snapshot updates are merged with the client-local activePlayerId so
+   * each browser always sees its own player perspective.
+   */
+  const startSubscription = useCallback((roomCode: string) => {
+    cancelSubscription();
+    const unsubscribe = subscribeToFirestoreRoom(roomCode, (updatedRoom: RoomState) => {
+      setRoom((prev) => ({
+        ...updatedRoom,
+        // Preserve the local client's own player identity
+        activePlayerId: clientPlayerIdRef.current ?? updatedRoom.activePlayerId,
+        // Keep any local screenPhase overrides if the host hasn't pushed a change yet
+        screenPhase: prev?.code === updatedRoom.code ? updatedRoom.screenPhase : prev?.screenPhase ?? updatedRoom.screenPhase,
+      }));
+    });
+    unsubscribeRef.current = unsubscribe;
+  }, [cancelSubscription]);
+
+  // Cancel the subscription when the component unmounts
+  useEffect(() => {
+    return () => {
+      cancelSubscription();
     };
+  }, [cancelSubscription]);
 
-    const updatedRoom: RoomState = {
-      ...targetRoom,
-      players: [...targetRoom.players, newPlayer],
-      activePlayerId: newPlayer.id
-    };
-
-    setRoom(updatedRoom);
-    setCurrentView('HOME');
+  // 1. Create Room — Firestore-backed
+  const handleCreateRoom = async (hostName: string, settings: GameSettings) => {
+    setIsLoading(true);
+    setFirebaseError(null);
+    try {
+      const newRoom = createInitialRoom(hostName, settings);
+      // Record this client's player ID before writing to Firestore
+      clientPlayerIdRef.current = newRoom.players[0].id;
+      await createFirestoreRoom(newRoom);
+      setRoom(newRoom);
+      setCurrentView('HOME');
+      // Subscribe so the lobby updates live on this client too
+      startSubscription(newRoom.code);
+    } catch (err) {
+      setFirebaseError((err as Error).message || 'Failed to create room. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // 3. Lobby Actions
+  // 2. Join Room — Firestore-backed
+  const handleJoinRoom = async (roomCode: string, playerName: string) => {
+    setIsLoading(true);
+    setFirebaseError(null);
+    try {
+      const newPlayer: Player = {
+        id: `player-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        name: playerName.trim() || 'Player',
+        avatar: '🕵️',
+        isHost: false,
+        isBot: false,
+        totalScore: 0,
+      };
+      // Record this client's player ID before subscribing
+      clientPlayerIdRef.current = newPlayer.id;
+      const joinedRoom = await joinFirestoreRoom(roomCode, newPlayer);
+      // Set local state with our own activePlayerId
+      setRoom({ ...joinedRoom, activePlayerId: newPlayer.id });
+      setCurrentView('HOME');
+      // Subscribe so the lobby updates live on this client too
+      startSubscription(roomCode);
+    } catch (err) {
+      setFirebaseError((err as Error).message || 'Failed to join room. Please check the room code and try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 3. Lobby Actions (host-only; local state only — Firestore sync not yet wired for bots/remove)
   const handleAddBot = () => {
     if (!room) return;
     setRoom(addBotPlayer(room));
@@ -93,7 +155,13 @@ export const App: React.FC = () => {
     }
   };
 
+  /**
+   * Leave Lobby — only cancels the local subscription and clears local state.
+   * Does NOT delete the Firestore room or modify the Firestore player list.
+   */
   const handleLeaveRoom = () => {
+    cancelSubscription();
+    clientPlayerIdRef.current = null;
     setRoom(null);
     setCurrentView('HOME');
   };
@@ -106,6 +174,7 @@ export const App: React.FC = () => {
 
   const handleSwitchActivePlayer = (playerId: string) => {
     if (!room) return;
+    clientPlayerIdRef.current = playerId;
     setRoom({ ...room, activePlayerId: playerId });
   };
 
@@ -141,6 +210,8 @@ export const App: React.FC = () => {
         soundEnabled={soundEnabled}
         onToggleSound={() => setSoundEnabled(!soundEnabled)}
         onReturnHome={() => {
+          cancelSubscription();
+          clientPlayerIdRef.current = null;
           setRoom(null);
           setCurrentView('HOME');
         }}
@@ -152,8 +223,14 @@ export const App: React.FC = () => {
           <>
             {currentView === 'HOME' && (
               <HomeScreen
-                onCreateGame={() => setCurrentView('CREATE')}
-                onJoinGame={() => setCurrentView('JOIN')}
+                onCreateGame={() => {
+                  setFirebaseError(null);
+                  setCurrentView('CREATE');
+                }}
+                onJoinGame={() => {
+                  setFirebaseError(null);
+                  setCurrentView('JOIN');
+                }}
                 onOpenRules={() => setIsRulesModalOpen(true)}
               />
             )}
@@ -161,14 +238,24 @@ export const App: React.FC = () => {
             {currentView === 'CREATE' && (
               <CreateGameScreen
                 onCreateRoom={handleCreateRoom}
-                onBack={() => setCurrentView('HOME')}
+                onBack={() => {
+                  setFirebaseError(null);
+                  setCurrentView('HOME');
+                }}
+                isLoading={isLoading}
+                error={firebaseError}
               />
             )}
 
             {currentView === 'JOIN' && (
               <JoinGameScreen
                 onJoinRoom={handleJoinRoom}
-                onBack={() => setCurrentView('HOME')}
+                onBack={() => {
+                  setFirebaseError(null);
+                  setCurrentView('HOME');
+                }}
+                isLoading={isLoading}
+                error={firebaseError}
               />
             )}
           </>

@@ -8,11 +8,15 @@ import { sounds } from '../utils/sound';
 interface JoinGameScreenProps {
   onJoinRoom: (roomCode: string, playerName: string) => void;
   onBack: () => void;
+  isLoading?: boolean;
+  error?: string | null;
 }
 
 export const JoinGameScreen: React.FC<JoinGameScreenProps> = ({
   onJoinRoom,
-  onBack
+  onBack,
+  isLoading = false,
+  error = null,
 }) => {
   const [roomCode, setRoomCode] = useState('');
   const [playerName, setPlayerName] = useState('Chacko');
@@ -72,10 +76,16 @@ export const JoinGameScreen: React.FC<JoinGameScreenProps> = ({
             variant="join"
             fullWidth
             className="mt-4"
+            disabled={isLoading}
           >
             <LogIn className="w-6 h-6 text-white" />
-            JOIN ROOM
+            {isLoading ? 'JOINING...' : 'JOIN ROOM'}
           </Button>
+
+          {/* FIREBASE ERROR */}
+          {error && (
+            <p className="text-center text-sm font-bold text-rose-600 mt-2">{error}</p>
+          )}
         </form>
       </Card>
     </div>

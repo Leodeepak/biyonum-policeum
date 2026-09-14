@@ -10,11 +10,15 @@ import { sounds } from '../utils/sound';
 interface CreateGameScreenProps {
   onCreateRoom: (hostName: string, settings: GameSettings) => void;
   onBack: () => void;
+  isLoading?: boolean;
+  error?: string | null;
 }
 
 export const CreateGameScreen: React.FC<CreateGameScreenProps> = ({
   onCreateRoom,
-  onBack
+  onBack,
+  isLoading = false,
+  error = null,
 }) => {
   const [hostName, setHostName] = useState('Host Player');
   const [playerCount, setPlayerCount] = useState<number>(3);
@@ -85,10 +89,16 @@ export const CreateGameScreen: React.FC<CreateGameScreenProps> = ({
             variant="create"
             fullWidth
             className="mt-4"
+            disabled={isLoading}
           >
             <Play className="w-6 h-6 fill-[#172B4D] text-[#172B4D]" />
-            CREATE ROOM
+            {isLoading ? 'CREATING...' : 'CREATE ROOM'}
           </Button>
+
+          {/* FIREBASE ERROR */}
+          {error && (
+            <p className="text-center text-sm font-bold text-rose-600 mt-2">{error}</p>
+          )}
         </form>
       </Card>
     </div>
